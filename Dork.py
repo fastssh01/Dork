@@ -1,58 +1,63 @@
-# GOOGLE SEARCHER
-# CREATED BY HASHIEEEEE
-# NOT FOR SALE
-# https://t.me/hashshinrinyoku
 import os
 import requests
-from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 import urllib.parse
-import shutil
 import sys
 import time
-
-
-def rerun():
-    python = sys.executable
-    os.execv(python, [python] + sys.argv)
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-def remove_duplicate_lines(filename):
-    if os.path.exists(filename):
-        with open(filename, 'r') as file:
-            lines = file.readlines()
-        lines = list(dict.fromkeys(lines))
-        with open(filename, 'w') as file:
-            file.writelines(lines)
+def generate_shoe_urls(dork):
+    urls = []
 
-def remove_file(file_path):
-    if os.path.exists(file_path):
-        os.remove(file_path)
+    proxies = {
+        'http': f'http://{proxy}',
+        'https': f'http://{proxy}'
+    }
+    auth = requests.auth.HTTPProxyAuth(*proxy_auth.split(':'))
+
+    google_search_url = f"http://www.google.com/search?q={dork}&num=100"
+    headers = {'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.119 Mobile Safari/537.36'} 
+
+    try:
+        response = requests.get(google_search_url, proxies=proxies, auth=auth, headers=headers, timeout=15)
+        status_code = response.status_code
+
+        if status_code != 200:
+            print(f"Error fetching URLs. Status Code: {status_code}")
+            return urls
+
+        soup = BeautifulSoup(response.content, 'html.parser')
+        links = soup.find_all('a')
         
-counter = 0
-clear_screen()
-os.makedirs("data", exist_ok=True)
+        for link in links:
+            href = link.get('href')
+            if href and href.startswith('/url?q=') and not 'webcache' in href:
+                actual_url = href.split('?q=')[1].split('&sa=U')[0]
+                if 'google.com' not in actual_url and not actual_url.startswith('/search'):
+                    urls.append(actual_url)
 
-os.makedirs('word_list', exist_ok=True)
-if not os.path.exists('word_list/word.txt'):
-    hash_url = 'http://hashie-phil.com/word_list/word.txt'
-    git_url = 'https://raw.githubusercontent.com/HashShinr/data/main/word.txt'
-    response = requests.get(hash_url) if requests.get(hash_url).status_code == 200 else requests.get(git_url)
-    open('word_list/word.txt', 'wb').write(response.content)
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching URLs: {str(e)}")
 
-output_file = "output.txt"
-main_wordlist = "./word_list/word.txt"
-word_file = "./data/word.txt"
-counter_file = "./data/counter.txt"
-backup_file = "./data/backup.txt"
-error_file = "./data/error.txt"
-dork_file = "./data/dork.txt"
-proxy_file = "./data/proxy.txt"
-bot_telegram_file = "./data/bot_telegram.txt"
+    return urls
 
-# Function to configure proxy
+# Example dork input (replace with your dork logic)
+input_dork = input("Enter dork (e.g., inurl:shoes): ")
+
+if not input_dork.strip():
+    print("Dork cannot be empty. Exiting.")
+    sys.exit()
+
+# Generate shoe URLs based on the dork
+shoe_urls = generate_shoe_urls(input_dork)
+
+# Print or use shoe_urls as needed
+print("Generated Shoe URLs:")
+for url in shoe_urls:
+    print(url)
+
 def configure_proxy(proxy_file):
     if not os.path.exists(proxy_file):
         clear_screen()
@@ -81,39 +86,6 @@ def configure_proxy(proxy_file):
 
 configure_proxy(proxy_file)
 
-if os.path.exists(counter_file) and os.path.getsize(counter_file) == 0:
-    if os.path.exists(backup_file):
-        shutil.copy(backup_file, counter_file)
-        remove_file(backup_file)
-
-if os.path.exists(counter_file) and os.path.getsize(counter_file) > 0:
-    response = input("Press 'Enter' to continue the progress\nType 'Reset' to reset everything\nType 'Dork' to reset dork and wordlist: ")
-    if response.lower() == 'reset':
-        clear_screen()
-        response = input("All files in the data folder will be deleted. Type Y to continue: ")
-        if response.lower() == 'y':
-            shutil.rmtree('data')
-            rerun()
-    elif response.lower() == 'dork':
-        clear_screen()
-        response = input("Dork, Wordlist, Error and Counter files in the data folder will be deleted. Type Y to continue: ")
-        if response.lower() == 'y':
-            remove_file(dork_file)
-            remove_file(word_file)
-            remove_file(error_file)
-            remove_file(counter_file)
-            remove_file(backup_file)
-            rerun()
-
-if not os.path.exists(dork_file) or os.path.getsize(dork_file) == 0:
-    input_dork = input("Enter dork (inurl:hatdog): ")
-    if input_dork.strip():
-        with open(dork_file, 'w') as f:
-            f.write(input_dork)
-    else:
-        print("Dork cannot be empty. Please enter a valid dork.")
-        time.sleep(2.5)
-        rerun()
 
 if not os.path.exists(bot_telegram_file):
     clear_screen()
@@ -126,12 +98,14 @@ if not os.path.exists(bot_telegram_file):
     with open(bot_telegram_file, 'w') as f:
         f.write(input_bot_id + '\n' + input_chat_id)
 
+
 if os.path.isfile(bot_telegram_file) and os.path.getsize(bot_telegram_file) > 0:
     with open(bot_telegram_file, 'r') as f:
         lines = f.readlines()
         if len(lines) == 2:
             bot_id  = lines[0].strip()
             chat_id = lines[1].strip()
+
 
 with open(proxy_file, 'r') as f:
     lines = f.readlines()
@@ -147,6 +121,7 @@ with open(dork_file, 'r') as file:
     if not dork:
         os.remove(dork_file)
         rerun()
+
 
 if not os.path.exists(word_file):
     clear_screen()
@@ -164,6 +139,8 @@ if not os.path.exists(word_file):
         time.sleep(1)
         rerun()
 
+
+
 def get_links(value):
     global dork
     global proxy
@@ -175,7 +152,7 @@ def get_links(value):
     auth = requests.auth.HTTPProxyAuth(*proxy_auth.split(':'))
     query = f"{dork} {value}"
     google_search_url = f"http://www.google.com/search?q={query}&num=100"
-    headers = {'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.119 Mobile Safari/537.36'}
+    headers = {'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.119 Mobile Safari/537.36'} 
     try:
         response = requests.get(google_search_url, proxies=proxies, auth=auth, timeout=15)
         status_code = response.status_code
@@ -186,7 +163,7 @@ def get_links(value):
             return f"Error Code: {status_code}"
         soup = BeautifulSoup(response.content, 'html.parser')
         links = soup.find_all('a')
-
+        
         urls = []
         for link in links:
             href = link.get('href')
@@ -194,17 +171,18 @@ def get_links(value):
                 actual_url = href.split('?q=')[1].split('&sa=U')[0]
                 if 'google.com' not in actual_url and not actual_url.startswith('/search'):
                     urls.append(actual_url)
-
+        
         if urls:
             total_urls = len(urls)
             with open(output_file, "a") as input_to:
                 for url in urls:
                     input_to.write(url + "\n")
-            return f"Total: {total_urls}"
+            return((f"Total: {total_urls}"))
         else:
-            return "Total: 0"
+            return((f"Total: 0"))
     except requests.exceptions.RequestException as e:
         return ""
+
 
 def read_urls_from_file(word_file):
     with open(word_file, 'r') as file:
@@ -236,6 +214,7 @@ def process_url(url, line_number):
     else:
         print(f"{line_number} Empty")
 
+
 def start_processing():
     global counter
     start_line = 1
@@ -247,7 +226,7 @@ def start_processing():
     batch_size = 50
     for i in range(0, len(urls_list), batch_size):
         batch_urls = urls_list[i:i + batch_size]
-        start_time = time.time()
+        start_time = time.time() 
         all_results = []
         with ThreadPoolExecutor(max_workers=batch_size) as executor:
             results = executor.map(process_url, batch_urls, range(start_line + i, start_line + i + len(batch_urls)))
@@ -256,12 +235,12 @@ def start_processing():
         if None not in all_results:
             largest_number = max(all_results)
             with open(backup_file, 'w') as f:
-                f.write(str(largest_number))
+               f.write(str(largest_number))
         processing_time = time.time() - start_time
         if len(all_results) == batch_size and processing_time < 4:
             clear_screen()
             print("Processing too fast, potential errors.")
-            response = input("Proxy might have a problem.\nRewrite Proxy? Type Y to continue: ").strip()
+            response = input(f"Proxy might have a problem.\nRewrite Proxy? Type Y to continue:").strip()
             if response.lower() == 'y':
                 remove_file(proxy_file)
                 clear_screen()
@@ -276,16 +255,18 @@ start_processing()
 
 remove_duplicate_lines(error_file)
 
+
 remove_file(word_file)
 remove_file(counter_file)
 remove_file(backup_file)
+
 
 if os.path.exists(error_file) and os.path.getsize(error_file) > 0:
     os.rename(error_file, word_file) if os.path.exists(error_file) else None
     with open(word_file, 'r') as f:
         lines = f.readlines()
         if len(lines) > 3:
-            rerun()
+           rerun()
 
 print("All Done")
 remove_file(dork_file)
@@ -293,4 +274,3 @@ remove_file(word_file)
 
 if globals().get('bot_id', '') != "" and chat_id != "":
     response = requests.get(f"https://api.telegram.org/bot{bot_id}/sendMessage?chat_id={chat_id}&text=GoogleSearch completed successfully")
-    
