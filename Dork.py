@@ -1,62 +1,98 @@
+# GOOGLE SEARCHER
+# CREATED BY HASHIEEEEE
+# NOT FOR SALE
+# https://t.me/hashshinrinyoku
 import os
 import requests
+from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
 import urllib.parse
+import os
+import shutil
 import sys
 import time
+
+
+def rerun():
+    python = sys.executable
+    os.execv(python, [python] + sys.argv)
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-def generate_shoe_urls(dork):
-    urls = []
-
-    proxies = {
-        'http': f'http://{proxy}',
-        'https': f'http://{proxy}'
-    }
-    auth = requests.auth.HTTPProxyAuth(*proxy_auth.split(':'))
-
-    google_search_url = f"http://www.google.com/search?q={dork}&num=100"
-    headers = {'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.6261.119 Mobile Safari/537.36'} 
-
-    try:
-        response = requests.get(google_search_url, proxies=proxies, auth=auth, headers=headers, timeout=15)
-        status_code = response.status_code
-
-        if status_code != 200:
-            print(f"Error fetching URLs. Status Code: {status_code}")
-            return urls
-
-        soup = BeautifulSoup(response.content, 'html.parser')
-        links = soup.find_all('a')
+def remove_duplicate_lines(filename):
+    if os.path.exists(filename):
+        with open(filename, 'r') as file:
+            lines = file.readlines()
+        lines = list(dict.fromkeys(lines))
+        with open(filename, 'w') as file:
+            file.writelines(lines)
+def remove_file(file_path):
+    if os.path.exists(file_path):
+        os.remove(file_path)
         
-        for link in links:
-            href = link.get('href')
-            if href and href.startswith('/url?q=') and not 'webcache' in href:
-                actual_url = href.split('?q=')[1].split('&sa=U')[0]
-                if 'google.com' not in actual_url and not actual_url.startswith('/search'):
-                    urls.append(actual_url)
+counter = 0
+clear_screen()
+os.makedirs("data") if not os.path.exists("data") else None
+ 
 
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching URLs: {str(e)}")
 
-    return urls
+os.makedirs('word_list', exist_ok=True)
+if not os.path.exists('word_list/word.txt'):
+    hash_url = 'http://hashie-phil.com/word_list/word.txt'
+    git_url = 'https://raw.githubusercontent.com/HashShinr/data/main/word.txt'
+    response = requests.get(hash_url) if requests.get(hash_url).status_code == 200 else requests.get(git_url)
+    open('word_list/word.txt', 'wb').write(response.content)
 
-# Example dork input (replace with your dork logic)
-input_dork = input("Enter dork (e.g., inurl:shoes): ")
+output_file = "output.txt"
+main_wordlist = "./word_list/word.txt"
+word_file = "./data/word.txt"
+counter_file = "./data/counter.txt"
+backup_file = "./data/backup.txt"
+error_file = "./data/error.txt"
+dork_file = "./data/dork.txt"
+proxy_file = "./data/proxy.txt"
+bot_telegram_file = "./data/bot_telegram.txt"
 
-if not input_dork.strip():
-    print("Dork cannot be empty. Exiting.")
-    sys.exit()
 
-# Generate shoe URLs based on the dork
-shoe_urls = generate_shoe_urls(input_dork)
 
-# Print or use shoe_urls as needed
-print("Generated Shoe URLs:")
-for url in shoe_urls:
-    print(url)
+if os.path.exists(counter_file) and os.path.getsize(counter_file) == 0:
+    if os.path.exists(backup_file):
+        shutil.copy(backup_file, counter_file)
+        remove_file(backup_file)
+
+if os.path.exists(counter_file) and os.path.getsize(counter_file) > 0:
+    response = input("Press 'Enter' to continue the progress\nType 'Reset' to reset everything\nType 'Dork' to reset dork and wordlist: ")
+    if response.lower() == 'reset':
+        clear_screen()
+        response = input("All files in the data folder will be deleted. Type Y to continue: ")
+        if response.lower() == 'y':
+            shutil.rmtree('data')
+            rerun()
+    elif response.lower() == 'dork':
+        clear_screen()
+        response = input("Dork, Wordlist, Error and Counter files in the data folder will be deleted. Type Y to continue: ")
+        if response.lower() == 'y':
+            remove_file(dork_file)
+            remove_file(word_file)
+            remove_file(error_file)
+            remove_file(counter_file)
+            remove_file(backup_file)
+            rerun()
+    
+
+    
+
+if not os.path.exists(dork_file) or os.path.getsize(dork_file) == 0:
+    input_dork = input("Enter dork (inurl:hatdog): ")
+    if input_dork.strip():
+        with open(dork_file, 'w') as f:
+            f.write(input_dork)
+    else:
+        print("Dork cannot be empty. Please enter a valid dork.")
+        time.sleep(2.5)
+        rerun()
+
 
 def configure_proxy(proxy_file):
     if not os.path.exists(proxy_file):
