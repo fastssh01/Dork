@@ -6,16 +6,19 @@ import os
 import requests
 from concurrent.futures import ThreadPoolExecutor
 from bs4 import BeautifulSoup
+import urllib.parse
+import os
 import shutil
 import sys
 import time
+
 
 def rerun():
     python = sys.executable
     os.execv(python, [python] + sys.argv)
 
 def clear_screen():
-    os.system('clear')
+    os.system('cls' if os.name == 'nt' else 'clear')
 
 def remove_duplicate_lines(filename):
     if os.path.exists(filename):
@@ -24,29 +27,22 @@ def remove_duplicate_lines(filename):
         lines = list(dict.fromkeys(lines))
         with open(filename, 'w') as file:
             file.writelines(lines)
-
 def remove_file(file_path):
     if os.path.exists(file_path):
         os.remove(file_path)
         
 counter = 0
 clear_screen()
-os.makedirs("data", exist_ok=True)
-os.makedirs('word_list', exist_ok=True)
+os.makedirs("data") if not os.path.exists("data") else None
+ 
 
+
+os.makedirs('word_list', exist_ok=True)
 if not os.path.exists('word_list/word.txt'):
     hash_url = 'http://hashie-phil.com/word_list/word.txt'
     git_url = 'https://raw.githubusercontent.com/HashShinr/data/main/word.txt'
-    try:
-        response = requests.get(hash_url)
-    except requests.exceptions.RequestException:
-        response = requests.get(git_url)
-    if response.status_code == 200:
-        with open('word_list/word.txt', 'wb') as f:
-            f.write(response.content)
-    else:
-        print("Failed to download the word list.")
-        sys.exit()
+    response = requests.get(hash_url) if requests.get(hash_url).status_code == 200 else requests.get(git_url)
+    open('word_list/word.txt', 'wb').write(response.content)
 
 output_file = "output.txt"
 main_wordlist = "./word_list/word.txt"
@@ -57,6 +53,8 @@ error_file = "./data/error.txt"
 dork_file = "./data/dork.txt"
 proxy_file = "./data/proxy.txt"
 bot_telegram_file = "./data/bot_telegram.txt"
+
+
 
 if os.path.exists(counter_file) and os.path.getsize(counter_file) == 0:
     if os.path.exists(backup_file):
@@ -81,6 +79,9 @@ if os.path.exists(counter_file) and os.path.getsize(counter_file) > 0:
             remove_file(counter_file)
             remove_file(backup_file)
             rerun()
+    
+
+    
 
 if not os.path.exists(dork_file) or os.path.getsize(dork_file) == 0:
     input_dork = input("Enter dork (inurl:hatdog): ")
@@ -91,6 +92,7 @@ if not os.path.exists(dork_file) or os.path.getsize(dork_file) == 0:
         print("Dork cannot be empty. Please enter a valid dork.")
         time.sleep(2.5)
         rerun()
+
 
 def configure_proxy(proxy_file):
     if not os.path.exists(proxy_file):
@@ -120,6 +122,7 @@ def configure_proxy(proxy_file):
 
 configure_proxy(proxy_file)
 
+
 if not os.path.exists(bot_telegram_file):
     clear_screen()
     input_bot_id = ""
@@ -131,12 +134,14 @@ if not os.path.exists(bot_telegram_file):
     with open(bot_telegram_file, 'w') as f:
         f.write(input_bot_id + '\n' + input_chat_id)
 
+
 if os.path.isfile(bot_telegram_file) and os.path.getsize(bot_telegram_file) > 0:
     with open(bot_telegram_file, 'r') as f:
         lines = f.readlines()
         if len(lines) == 2:
             bot_id  = lines[0].strip()
             chat_id = lines[1].strip()
+
 
 with open(proxy_file, 'r') as f:
     lines = f.readlines()
@@ -153,6 +158,7 @@ with open(dork_file, 'r') as file:
         os.remove(dork_file)
         rerun()
 
+
 if not os.path.exists(word_file):
     clear_screen()
     response = input("Wordlist is empty. Create new? Type Y to continue: ")
@@ -168,6 +174,8 @@ if not os.path.exists(word_file):
         print("Source word file not found.")
         time.sleep(1)
         rerun()
+
+
 
 def get_links(value):
     global dork
@@ -211,6 +219,7 @@ def get_links(value):
     except requests.exceptions.RequestException as e:
         return ""
 
+
 def read_urls_from_file(word_file):
     with open(word_file, 'r') as file:
         urls = [line.strip() for line in file.readlines()]
@@ -240,6 +249,7 @@ def process_url(url, line_number):
             print(f"{line_number} Empty output for: {url}")
     else:
         print(f"{line_number} Empty")
+
 
 def start_processing():
     global counter
@@ -281,9 +291,11 @@ start_processing()
 
 remove_duplicate_lines(error_file)
 
+
 remove_file(word_file)
 remove_file(counter_file)
 remove_file(backup_file)
+
 
 if os.path.exists(error_file) and os.path.getsize(error_file) > 0:
     os.rename(error_file, word_file) if os.path.exists(error_file) else None
@@ -298,3 +310,4 @@ remove_file(word_file)
 
 if globals().get('bot_id', '') != "" and chat_id != "":
     response = requests.get(f"https://api.telegram.org/bot{bot_id}/sendMessage?chat_id={chat_id}&text=GoogleSearch completed successfully")
+                  
